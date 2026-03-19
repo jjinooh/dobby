@@ -1,11 +1,9 @@
-from pathlib import Path
-
-html = r'''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>마법사 맞추기 추첨 게임</title>
+  <title>마법사 맞추기 게임</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -418,36 +416,36 @@ html = r'''<!DOCTYPE html>
 
   <script>
     const allCharacters = [
-      { name: "시빌 트릴로니", image: "images/시빌 트릴로니.png" },
-      { name: "돌로레스 엄브릿지", image: "images/덜로리스 엄브릿지.png" },
-      { name: "두들리 더즐리", image: "images/두들리 더즐리.png" },
-      { name: "론 위즐리", image: "images/론 위즐리.png" },
-      { name: "롤랜다 후치", image: "images/롤랜다 후치.png" },
-      { name: "루나 러브굿", image: "images/루나 러브굿.png" },
-      { name: "루시우스 말포이", image: "images/루시우스 말포이.png" },
-      { name: "마지 더즐리", image: "images/마지 더즐리.png" },
-      { name: "볼드모트", image: "images/볼드모트.png" },
-      { name: "빅터 크룸", image: "images/빅터 크룸.png" },
-      { name: "빈센트 크레이브", image: "images/빈센트 크레이브.png" },
-      { name: "빌 위즐리", image: "images/빌 위즐리.png" },
-      { name: "세드릭 디고리", image: "images/세드릭 디고리.png" },
-      { name: "세베루스 스네이프", image: "images/세베루스 스네이프.png" },
-      { name: "시리우스 블랙", image: "images/시리우스 블랙.png" },
-      { name: "아구스 필치", image: "images/아구스 필치.png" },
-      { name: "아서 위즐리", image: "images/아서 위즐리.png" },
-      { name: "알버스 덤블도어", image: "images/알버스 덤블도어.png" },
-      { name: "앨러스터 무디", image: "images/앨러스터 무디.png" },
-      { name: "올리버 우드", image: "images/올리버 우드.png" },
-      { name: "드레이코 말포이", image: "images/이드레이코 말포이.png" },
-      { name: "지니 위즐리", image: "images/지니 위즐리.png" },
-      { name: "초 챙", image: "images/초챙.png" },
-      { name: "퀴리너스 퀴렐", image: "images/퀴리너스 퀴렐.png" },
-      { name: "프레드 위즐리", image: "images/프레드 위즐리.png" },
-      { name: "플뢰르 들라크르", image: "images/플뢰르 들라크르.png" },
-      { name: "해리 포터", image: "images/해리 포터.png" },
-      { name: "헤르미온느 그레인저", image: "images/헤르미온느 그레인저.png" },
-      { name: "릴리 포터", image: "images/릴리 포터.png" },
-      { name: "도비", image: "images/도비.png" }
+      { name: "헤르미온느 그레인저", image: "1.png" },
+      { name: "해리 포터", image: "2.png" },
+      { name: "플뢰르 들라크르", image: "3.png" },
+      { name: "프레드 위즐리", image: "4.png" },
+      { name: "퀴리너스 퀴렐", image: "5.png" },
+      { name: "초 챙", image: "6.png" },
+      { name: "지니 위즐리", image: "7.png" },
+      { name: "올리버 우드", image: "8.png" },
+      { name: "앨러스터 무디", image: "9.png" },
+      { name: "알버스 덤블도어", image: "10.png" },
+      { name: "아서 위즐리", image: "11.png" },
+      { name: "아구스 필치", image: "12.png" },
+      { name: "시빌 트릴로니", image: "13.png" },
+      { name: "시리우스 블랙", image: "14.png" },
+      { name: "세베루스 스네이프", image: "15.png" },
+      { name: "세드릭 디고리", image: "16.png" },
+      { name: "빌 위즐리", image: "17.png" },
+      { name: "빈센트 크레이브", image: "18.png" },
+      { name: "빅터 크룸", image: "19.png" },
+      { name: "볼드모트", image: "20.png" },
+      { name: "마지 더즐리", image: "21.png" },
+      { name: "릴리 포터", image: "22.png" },
+      { name: "루시우스 말포이", image: "23.png" },
+      { name: "루나 러브굿", image: "24.png" },
+      { name: "롤랜다 후치", image: "25.png" },
+      { name: "론 위즐리", image: "26.png" },
+      { name: "드레이코 말포이", image: "27.png" },
+      { name: "두들리 더즐리", image: "28.png" },
+      { name: "도비", image: "29.png" },
+      { name: "돌로레스 엄브릿지", image: "30.png" }
     ];
 
     let remainingCharacters = [...allCharacters];
@@ -818,8 +816,3 @@ html = r'''<!DOCTYPE html>
   </script>
 </body>
 </html>
-'''
-
-path = Path("/mnt/data/harry_potter_quiz_draw.html")
-path.write_text(html, encoding="utf-8")
-print(f"Saved to {path}")
