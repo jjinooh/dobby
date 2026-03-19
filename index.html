@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>마법사 랜덤 추첨</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg1: #24160f;
+      --bg2: #0d0907;
+      --gold1: #f3dfb0;
+      --gold2: #d0a55a;
+      --gold3: #7b5121;
+      --ink: #2b1708;
+      --light: #f8efd8;
+      --muted: #d9c6a2;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(255, 223, 160, 0.12), transparent 30%),
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.05), transparent 20%),
+        radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.04), transparent 18%),
+        linear-gradient(180deg, var(--bg1), var(--bg2) 70%);
+      color: var(--light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .sparkles,
+    .sparkles::before,
+    .sparkles::after {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(255,232,171,0.7) 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1.5px);
+      background-size: 180px 180px, 240px 240px, 320px 320px;
+      background-position: 0 0, 80px 40px, 120px 120px;
+      opacity: 0.25;
+      animation: drift 20s linear infinite;
+    }
+
+    .sparkles::before { animation-duration: 28s; opacity: 0.18; }
+    .sparkles::after { animation-duration: 34s; opacity: 0.12; }
+
+    @keyframes drift {
+      from { transform: translateY(0); }
+      to { transform: translateY(-40px); }
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1120px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .left-panel,
+    .right-panel {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 28px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+
+    .left-panel {
+      padding: 28px;
+    }
+
+    .right-panel {
+      padding: 22px 20px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+    }
+
+    .title-wrap {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      color: var(--gold1);
+      text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    }
+
+    .title-wrap p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .card-frame {
+      max-width: 540px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, var(--gold1), var(--gold2));
+      border-radius: 30px;
+      border: 9px solid var(--gold3);
+      box-shadow:
+        inset 0 0 0 3px rgba(255, 239, 205, 0.4),
+        0 20px 40px rgba(0,0,0,0.35);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card-frame::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 2px solid rgba(102, 61, 18, 0.35);
+      border-radius: 22px;
+      pointer-events: none;
+    }
+
+    .image-wrap {
+      padding: 20px 20px 0;
+    }
+
+    .image-wrap img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: block;
+      object-fit: cover;
+      border-radius: 22px;
+      border: 4px solid #8e6532;
+      background: #efe2c7;
+      box-shadow: inset 0 0 18px rgba(0,0,0,0.08);
+    }
+
+    .name-ribbon {
+      min-height: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 18px 20px;
+      font-size: 34px;
+      line-height: 1.15;
+      font-weight: 900;
+      color: var(--ink);
+      text-align: center;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .name-ribbon.hide {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .meta {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 18px 0 22px;
+    }
+
+    .badge {
+      background: rgba(255,255,255,0.08);
+      color: var(--light);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .status {
+      min-height: 26px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 18px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 15px 22px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.2s ease, opacity 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); filter: brightness(1.03); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #ffd967, #f0bd2e);
+      color: #2a1808;
+      min-width: 150px;
+    }
+
+    .btn-secondary {
+      background: #e8dcc5;
+      color: #2a1808;
+    }
+
+    .btn-dark {
+      background: rgba(255,255,255,0.08);
+      color: var(--light);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .winner-flash {
+      animation: pop 0.45s ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.96); }
+      60% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
+    .right-panel h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      color: var(--gold1);
+    }
+
+    .picked-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .picked-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .picked-item img {
+      width: 56px;
+      height: 56px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 2px solid rgba(255,255,255,0.18);
+      background: #e8dcc5;
+      flex-shrink: 0;
+    }
+
+    .picked-order {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .picked-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--light);
+      word-break: keep-all;
+    }
+
+    .empty-text {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 8px 2px;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .right-panel {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 12px; }
+      .left-panel, .right-panel { border-radius: 22px; }
+      .left-panel { padding: 18px; }
+      .title-wrap h1 { font-size: 30px; }
+      .name-ribbon { font-size: 28px; min-height: 84px; }
+      .picked-grid { grid-template-columns: 1fr; }
+      .controls button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sparkles"></div>
+
+  <div class="app">
+    <section class="left-panel">
+      <div class="title-wrap">
+        <h1>마법사 랜덤 추첨</h1>
+        <p>이름과 사진이 빠르게 지나가다가 마지막에는 사진만 남는다.</p>
+      </div>
+
+      <div id="cardFrame" class="card-frame">
+        <div class="image-wrap">
+          <img id="characterImage" src="" alt="인물 사진" />
+        </div>
+        <div id="characterName" class="name-ribbon">준비 완료</div>
+      </div>
+
+      <div class="meta">
+        <div id="remainingBadge" class="badge">남은 인물 30명</div>
+        <div id="pickedBadge" class="badge">뽑힌 인물 0명</div>
+      </div>
+
+      <div id="status" class="status">대기 중</div>
+
+      <div class="controls">
+        <button id="startBtn" class="btn-primary">추첨 시작</button>
+        <button id="resetBtn" class="btn-secondary">전체 리셋</button>
+        <button id="fullscreenBtn" class="btn-dark">전체화면</button>
+      </div>
+    </section>
+
+    <aside class="right-panel">
+      <h2>뽑힌 인물</h2>
+      <div id="pickedGrid" class="picked-grid"></div>
+      <div id="emptyText" class="empty-text">아직 뽑힌 인물이 없다. 추첨을 시작하면 이곳에 순서대로 기록된다.</div>
+    </aside>
+  </div>
+
+  <script>
+    const allCharacters = [
+      { name: "시빌 트릴로니", image: "images/시빌 트릴로니.png" },
+      { name: "돌로레스 엄브릿지", image: "images/덜로리스 엄브릿지.png" },
+      { name: "두들리 더즐리", image: "images/두들리 더즐리.png" },
+      { name: "론 위즐리", image: "images/론 위즐리.png" },
+      { name: "롤랜다 후치", image: "images/롤랜다 후치.png" },
+      { name: "루나 러브굿", image: "images/루나 러브굿.png" },
+      { name: "루시우스 말포이", image: "images/루시우스 말포이.png" },
+      { name: "마지 더즐리", image: "images/마지 더즐리.png" },
+      { name: "볼드모트", image: "images/볼드모트.png" },
+      { name: "빅터 크룸", image: "images/빅터 크룸.png" },
+      { name: "빈센트 크레이브", image: "images/빈센트 크레이브.png" },
+      { name: "빌 위즐리", image: "images/빌 위즐리.png" },
+      { name: "세드릭 디고리", image: "images/세드릭 디고리.png" },
+      { name: "세베루스 스네이프", image: "images/세베루스 스네이프.png" },
+      { name: "시리우스 블랙", image: "images/시리우스 블랙.png" },
+      { name: "아구스 필치", image: "images/아구스 필치.png" },
+      { name: "아서 위즐리", image: "images/아서 위즐리.png" },
+      { name: "알버스 덤블도어", image: "images/알버스 덤블도어.png" },
+      { name: "앨러스터 무디", image: "images/앨러스터 무디.png" },
+      { name: "올리버 우드", image: "images/올리버 우드.png" },
+      { name: "드레이코 말포이", image: "images/이드레이코 말포이.png" },
+      { name: "지니 위즐리", image: "images/지니 위즐리.png" },
+      { name: "초 챙", image: "images/초챙.png" },
+      { name: "퀴리너스 퀴렐", image: "images/퀴리너스 퀴렐.png" },
+      { name: "프레드 위즐리", image: "images/프레드 위즐리.png" },
+      { name: "플뢰르 들라크르", image: "images/플뢰르 들라크르.png" },
+      { name: "해리 포터", image: "images/해리 포터.png" },
+      { name: "헤르미온느 그레인저", image: "images/헤르미온느 그레인저.png" },
+      { name: "릴리 포터", image: "images/릴리 포터.png" },
+      { name: "도비", image: "images/도비.png" }
+    ];
+
+    let remainingCharacters = [...allCharacters];
+    let pickedCharacters = [];
+    let isRunning = false;
+
+    const characterImage = document.getElementById("characterImage");
+    const characterName = document.getElementById("characterName");
+    const statusEl = document.getElementById("status");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const pickedGrid = document.getElementById("pickedGrid");
+    const emptyText = document.getElementById("emptyText");
+    const remainingBadge = document.getElementById("remainingBadge");
+    const pickedBadge = document.getElementById("pickedBadge");
+    const cardFrame = document.getElementById("cardFrame");
+
+    const audioEngine = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return false;
+          this.ctx = new AC();
+        }
+        if (this.ctx.state === "suspended") {
+          this.ctx.resume();
+        }
+        return true;
+      }
+    };
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function randomIndex(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function updateBadges() {
+      remainingBadge.textContent = `남은 인물 ${remainingCharacters.length}명`;
+      pickedBadge.textContent = `뽑힌 인물 ${pickedCharacters.length}명`;
+    }
+
+    function renderCharacter(character, showName = true) {
+      if (!character) return;
+      characterImage.src = character.image;
+      characterImage.alt = character.name;
+      characterName.textContent = character.name;
+      characterName.classList.toggle("hide", !showName);
+    }
+
+    function renderPickedList() {
+      pickedGrid.innerHTML = "";
+
+      if (pickedCharacters.length === 0) {
+        emptyText.style.display = "block";
+        return;
+      }
+
+      emptyText.style.display = "none";
+
+      pickedCharacters.forEach((person, index) => {
+        const item = document.createElement("div");
+        item.className = "picked-item";
+        item.innerHTML = `
+          <img src="${person.image}" alt="${person.name}">
+          <div>
+            <div class="picked-order">${index + 1}번째 추첨</div>
+            <div class="picked-name">${person.name}</div>
+          </div>
+        `;
+        pickedGrid.appendChild(item);
+      });
+    }
+
+    function playTone(frequency, startTime, duration, type = "sine", volume = 0.03) {
+      if (!audioEngine.ctx) return;
+
+      const ctx = audioEngine.ctx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(frequency, startTime);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(2200, startTime);
+
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.03);
+    }
+
+    function playNoiseSweep(startTime, duration = 0.22, volume = 0.015) {
+      if (!audioEngine.ctx) return;
+
+      const ctx = audioEngine.ctx;
+      const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+
+      const source = ctx.createBufferSource();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+
+      source.buffer = buffer;
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(1500, startTime);
+      filter.frequency.exponentialRampToValueAtTime(650, startTime + duration);
+
+      gain.gain.setValueAtTime(volume, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      source.start(startTime);
+      source.stop(startTime + duration);
+    }
+
+    function playShuffleSound() {
+      if (!audioEngine.init()) return;
+      const now = audioEngine.ctx.currentTime;
+      const notes = [660, 784, 988];
+      notes.forEach((note, idx) => {
+        playTone(note, now + idx * 0.035, 0.08, "triangle", 0.018);
+      });
+    }
+
+    function playSlowdownSound() {
+      if (!audioEngine.init()) return;
+      const now = audioEngine.ctx.currentTime;
+      playTone(523.25, now, 0.16, "triangle", 0.02);
+      playTone(659.25, now + 0.1, 0.18, "triangle", 0.02);
+    }
+
+    function playWinnerFanfare() {
+      if (!audioEngine.init()) return;
+      const now = audioEngine.ctx.currentTime;
+
+      playNoiseSweep(now, 0.24, 0.01);
+
+      const melody = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+      melody.forEach((note, idx) => {
+        playTone(note, now + idx * 0.12, 0.34, idx < 3 ? "triangle" : "sine", 0.03);
+      });
+
+      playTone(1567.98, now + 0.65, 0.8, "sine", 0.022);
+      playTone(783.99, now + 0.65, 0.8, "triangle", 0.016);
+    }
+
+    async function startRoulette() {
+      if (isRunning) return;
+
+      if (remainingCharacters.length === 0) {
+        statusEl.textContent = "모든 인물을 다 뽑았다. 전체 리셋 후 다시 시작하면 된다.";
+        return;
+      }
+
+      audioEngine.init();
+      isRunning = true;
+      startBtn.disabled = true;
+      resetBtn.disabled = true;
+      fullscreenBtn.disabled = true;
+      cardFrame.classList.remove("winner-flash");
+
+      const rouletteRounds = 26;
+      let delay = 75;
+      let preview = null;
+
+      for (let i = 0; i < rouletteRounds; i++) {
+        preview = remainingCharacters[randomIndex(remainingCharacters.length)];
+        renderCharacter(preview, true);
+        statusEl.textContent = i < 16 ? "추첨 중..." : "두구두구...";
+
+        if (i < 18) {
+          playShuffleSound();
+        } else if (i === 20 || i === 23) {
+          playSlowdownSound();
+        }
+
+        await sleep(delay);
+
+        if (i > 7) delay += 16;
+        if (i > 15) delay += 28;
+        if (i > 21) delay += 52;
+      }
+
+      const finalIndex = randomIndex(remainingCharacters.length);
+      const winner = remainingCharacters[finalIndex];
+      remainingCharacters.splice(finalIndex, 1);
+      pickedCharacters.push(winner);
+
+      renderCharacter(winner, false);
+      cardFrame.classList.add("winner-flash");
+      statusEl.textContent = `선정 완료: ${winner.name}`;
+      playWinnerFanfare();
+
+      updateBadges();
+      renderPickedList();
+
+      isRunning = false;
+      startBtn.disabled = false;
+      resetBtn.disabled = false;
+      fullscreenBtn.disabled = false;
+    }
+
+    function resetAll() {
+      if (isRunning) return;
+
+      remainingCharacters = [...allCharacters];
+      pickedCharacters = [];
+      characterImage.src = "";
+      characterImage.alt = "인물 사진";
+      characterName.textContent = "준비 완료";
+      characterName.classList.remove("hide");
+      statusEl.textContent = "대기 중";
+      cardFrame.classList.remove("winner-flash");
+
+      updateBadges();
+      renderPickedList();
+    }
+
+    async function toggleFullScreen() {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        } else {
+          await document.exitFullscreen();
+        }
+      } catch (error) {
+        statusEl.textContent = "전체화면 전환을 지원하지 않는 환경일 수 있다.";
+      }
+    }
+
+    startBtn.addEventListener("click", () => {
+      audioEngine.init();
+      startRoulette();
+    });
+
+    resetBtn.addEventListener("click", resetAll);
+    fullscreenBtn.addEventListener("click", toggleFullScreen);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        audioEngine.init();
+        startRoulette();
+      }
+    });
+
+    updateBadges();
+    renderPickedList();
+  </script>
+</body>
+</html>
